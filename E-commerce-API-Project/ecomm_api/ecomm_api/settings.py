@@ -63,7 +63,7 @@ ROOT_URLCONF = 'ecomm_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # Project-level templates (e.g. the homepage UI)
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -80,15 +80,17 @@ WSGI_APPLICATION = 'ecomm_api.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Credentials are read from the environment (.env) so no secrets live in source.
+# Locally these mirror the developer's MySQL; on PythonAnywhere they point at the
+# PythonAnywhere MySQL instance (see deployment runbook).
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ecomm_api_db',
-        'USER': 'root',
-        'PASSWORD': '27oCt2004.mijo', # Use the password from step 1
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': config('DB_ENGINE', default='django.db.backends.mysql'),
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='3306', cast=str),
     }
 }
 
@@ -129,6 +131,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Additional places Django collects static assets from (here: the marketplace UI files).
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -143,6 +147,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ),  
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -159,4 +166,5 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",  # For VS Code Live Server
     "http://localhost:5500",   # Also for VS Code Live Server
+    "https://mohamedalmajzoub.pythonanywhere.com",  # Live deployment (same-origin when served by Django)
 ]
